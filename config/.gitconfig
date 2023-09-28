@@ -1,0 +1,12 @@
+[user]
+	name = Daniel Castro
+	email = 2968031+odanieldcs@users.noreply.github.com
+
+[core]
+	excludesfile = /Users/daniel/.gitignore_global
+
+[init]
+	defaultBranch = main
+
+[push]
+	default = current
