@@ -1,25 +1,21 @@
-# Mac
-.DS_Store
+# → ~/.config/git/ignore
+# Only machine/personal noise. Project artifacts (node_modules, .env, logs)
+# belong in each project's .gitignore so they also apply to other contributors.
 
-# VSCode
-.vscode/
+# macOS
+.DS_Store
+._*
+
+# Personal scratch files: notes.ignored.md, tmp.ignored/
+*.ignored
+*.ignored.*
+*.ignored/
+
+# Local History extension
+.history/
 
 # npm
 npm-debug.log
-node_modules/
-
-# yarn
-yarn-error.log
-
-# localhistory
-.history
-
-# Over-arching stuff
-*.ignored/
-*.ignored.*
-
-# git
-*.patch
 
 # eslint
 .eslintcache

@@ -1,0 +1,43 @@
+# → ~/.config/git/config. If ~/.gitconfig also exists, its values override these.
+
+[user]
+  name = Daniel Castro
+  email = 2968031+odanieldcs@users.noreply.github.com
+
+[init]
+  defaultBranch = main
+
+[core]
+  excludesFile = ~/.gitignore_global
+  pager = delta
+
+[interactive]
+  diffFilter = delta --color-only
+
+[delta]
+  navigate = true # n / N jump between files in a diff
+
+[diff]
+  colorMoved = default
+
+[merge]
+  conflictStyle = zdiff3
+
+[push]
+  autoSetupRemote = true # first push of a new branch without --set-upstream
+
+[pull]
+  rebase = true
+
+[rebase]
+  autoStash = true
+
+[fetch]
+  prune = true
+
+[alias]
+  st = status -sb
+  lg = log --oneline --graph --decorate -20
+  amend = commit --amend --no-edit
+  unstage = restore --staged
+  undo = reset --soft HEAD~1
