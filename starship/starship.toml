@@ -1,0 +1,37 @@
+"$schema" = 'https://starship.rs/config-schema.json'
+
+# Give slow commands (git status in big repos, node --version) up to 2s (default: 500ms)
+command_timeout = 2000
+
+[character]
+success_symbol = '[➜](bold green)'
+
+[package]
+disabled = true
+
+[git_branch]
+symbol = '🌱 '
+truncation_length = 24
+
+[git_status]
+conflicted = '🏳'
+ahead = '🏎💨'
+behind = '😰'
+diverged = '😵'
+up_to_date = '✓'
+untracked = '🤷'
+stashed = '📦'
+modified = '📝'
+staged = '[++\($count\)](green)'
+renamed = '👅'
+deleted = '🗑'
+
+[nodejs]
+symbol = '⬢ '
+version_format = 'v${major}.${minor}'
+
+[status]
+disabled = false # show the exit code when a command fails
+
+[aws]
+disabled = true
