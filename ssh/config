@@ -1,0 +1,11 @@
+# → ~/.ssh/config
+# Machine-specific hosts go in ~/.ssh/config.local (not versioned).
+Include config.local
+
+# UseKeychain only exists in Apple's ssh; ignore it elsewhere
+IgnoreUnknown UseKeychain
+
+Host *
+  AddKeysToAgent yes
+  UseKeychain yes
+  IdentityFile ~/.ssh/id_ed25519
