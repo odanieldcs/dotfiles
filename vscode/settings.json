@@ -1,0 +1,186 @@
+{
+  // VS Code user settings (install.sh links this file). Cursor gets a copy through
+  // its import from VS Code; it runs on an older VS Code base and ignores unknown keys.
+  // --- Workbench --------------------------------------------------------------
+  "workbench.colorTheme": "Dracula Pro",
+  "workbench.iconTheme": "symbols",
+  "workbench.productIconTheme": "fluent-icons",
+  "workbench.startupEditor": "newUntitledFile",
+  "workbench.editor.labelFormat": "short",
+  "workbench.editor.tabSizing": "shrink",
+  "workbench.editor.empty.hint": "hidden",
+  "workbench.editorAssociations": {
+    "*.copilotmd": "vscode.markdown.preview.editor",
+    "*.svg": "default"
+  },
+  "window.zoomLevel": 1.24,
+  "window.title": "${dirty}${activeEditorShort}${separator}${rootName}${separator}${profileName}",
+  "symbols.files.associations": {
+    ".env.example": "gear"
+  },
+  // --- Editor -----------------------------------------------------------------
+  "editor.fontFamily": "JetBrains Mono",
+  "editor.fontLigatures": true,
+  "editor.fontSize": 14,
+  "editor.lineHeight": 2, // values below 8 multiply fontSize
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  "editor.indentSize": "tabSize",
+  "editor.rulers": [
+    80,
+    120
+  ],
+  "editor.minimap.enabled": false,
+  "editor.renderLineHighlight": "gutter",
+  "editor.matchBrackets": "always",
+  "editor.linkedEditing": true,
+  "editor.autoClosingQuotes": "always",
+  "editor.scrollbar.verticalScrollbarSize": 10,
+  "editor.accessibilitySupport": "off",
+  "diffEditor.ignoreTrimWhitespace": false,
+  // --- Suggestions ------------------------------------------------------------
+  "editor.snippetSuggestions": "bottom",
+  "editor.acceptSuggestionOnEnter": "off",
+  "editor.quickSuggestionsDelay": 3000, // ms before the suggestion list opens (default: 10)
+  "editor.inlineSuggest.showToolbar": "always",
+  "github.copilot.enable": {
+    "*": true,
+    "plaintext": true,
+    "markdown": true,
+    "scminput": false,
+    "json": true
+  },
+  // --- Files & explorer -------------------------------------------------------
+  "files.watcherExclude": {
+    "**/node_modules/**": true
+  },
+  "explorer.compactFolders": false,
+  "explorer.confirmDelete": false,
+  "explorer.confirmDragAndDrop": false,
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.patterns": {
+    "*.ts": "${capture}.test.ts, ${capture}.spec.ts",
+    "*.js": "${capture}.js.map, ${capture}.min.js, ${capture}.d.ts",
+    "*.jsx": "${capture}.js",
+    "*.tsx": "${capture}.ts",
+    "tsconfig.json": "tsconfig-prod.json",
+    "package.json": "package-lock.json, pnpm-lock*, bun.lock*, nest*, yarn.lock",
+    ".eslintrc.json": ".eslintignore",
+    ".prettierrc.json": ".prettierignore",
+    "tailwind.config.js": "tailwind.config*, postcss.config*",
+    ".env": ".env*",
+    "*.sqlite": "${capture}.${extname}-*",
+    "*.db": "${capture}.${extname}-*",
+    "*.sqlite3": "${capture}.${extname}-*",
+    "*.db3": "${capture}.${extname}-*",
+    "*.sdb": "${capture}.${extname}-*",
+    "*.s3db": "${capture}.${extname}-*"
+  },
+  "security.workspace.trust.untrustedFiles": "newWindow",
+  // --- Formatting -------------------------------------------------------------
+  // Biome formats JS/TS, but only in projects that have a biome.json(c).
+  // A project that uses Prettier sets its formatter in its own .vscode/settings.json.
+  "editor.formatOnSave": true,
+  "editor.formatOnPaste": true,
+  "biome.requireConfiguration": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.biome": "explicit",
+    "source.organizeImports.biome": "explicit",
+    "source.fixAll.eslint": "explicit",
+    "source.removeUnusedImports": "explicit"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[javascriptreact]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "vscode.json-language-features"
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "vscode.json-language-features"
+  },
+  "[markdown]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.quickSuggestions": {
+      "comments": false,
+      "strings": true,
+      "other": true
+    }
+  },
+  "[mdx]": {
+    "editor.formatOnSave": false,
+    "editor.formatOnPaste": false
+  },
+  "[prisma]": {
+    "editor.defaultFormatter": "Prisma.prisma"
+  },
+  "[dockercompose]": {
+    "editor.defaultFormatter": "redhat.vscode-yaml",
+    "editor.quickSuggestions": {
+      "other": true,
+      "comments": false,
+      "strings": true
+    }
+  },
+  "[github-actions-workflow]": {
+    "editor.defaultFormatter": "redhat.vscode-yaml"
+  },
+  // --- JavaScript / TypeScript ------------------------------------------------
+  // VS Code 1.120+ reads js/ts.*; Cursor's older base reads typescript.* / javascript.*.
+  // VS Code marks the old keys as deprecated but they keep Cursor working.
+  "js/ts.updateImportsOnFileMove.enabled": "always",
+  "js/ts.preferences.importModuleSpecifier": "relative",
+  "javascript.updateImportsOnFileMove.enabled": "always",
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "typescript.preferences.importModuleSpecifier": "relative",
+  // --- Linting ----------------------------------------------------------------
+  "eslint.lintTask.enable": true,
+  // --- Terminal ---------------------------------------------------------------
+  "terminal.integrated.fontFamily": "JetBrainsMono Nerd Font",
+  "terminal.integrated.fontSize": 13,
+  "terminal.integrated.lineHeight": 1.6,
+  "terminal.integrated.fontWeightBold": "normal",
+  "terminal.integrated.drawBoldTextInBrightColors": true,
+  "terminal.integrated.cursorStyle": "line",
+  "terminal.integrated.cursorBlinking": true,
+  "terminal.integrated.cursorWidth": 2,
+  "terminal.integrated.copyOnSelection": true,
+  // --- Git --------------------------------------------------------------------
+  "git.autofetch": true,
+  "git.confirmSync": false,
+  "git.enableSmartCommit": true,
+  // --- Debug ------------------------------------------------------------------
+  "debug.allowBreakpointsEverywhere": true,
+  "debug.terminal.clearBeforeReusing": true,
+  "debug.console.fontSize": 13,
+  // --- Chat & AI --------------------------------------------------------------
+  "chat.agentsControl.enabled": "hidden", // replaces the removed chat.commandCenter.enabled
+  "chat.mcp.gallery.enabled": true,
+  "claudeCode.hideOnboarding": true,
+  // --- Other extensions -------------------------------------------------------
+  "docker.extension.enableComposeLanguageServer": false,
+  "json.schemaDownload.trustedDomains": {
+    "https://schemastore.azurewebsites.net/": true,
+    "https://raw.githubusercontent.com/": true,
+    "https://www.schemastore.org/": true,
+    "https://json.schemastore.org/": true,
+    "https://json-schema.org/": true,
+    "https://biomejs.dev": true
+  },
+  "yaml.disableSchemaDetection": [
+    "**/.github/workflows/*.yml",
+    "**/.github/workflows/*.yaml",
+    "**/.gitea/workflows/*.yml",
+    "**/.gitea/workflows/*.yaml",
+    "**/.forgejo/workflows/*.yml",
+    "**/.forgejo/workflows/*.yaml"
+  ]
+}
