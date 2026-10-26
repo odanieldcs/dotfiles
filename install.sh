@@ -95,6 +95,13 @@ ask() {
   [[ $answer == y* ]]
 }
 
+# Brewfile entries `brew bundle` would act on, as sorted "Label name" lines
+# (e.g. "Cask warp"). With --no-upgrade it lists only what is missing.
+bundle_pending() {
+  { brew bundle check --verbose --file="$DOTFILES/Brewfile" "$@" 2>&1 || true; } |
+    sed -nE '/^→ Tap /d; s/^→ (.+) needs to be installed( or updated)?\.$/\1/p' | sort
+}
+
 # --- File helpers ---------------------------------------------------------------
 
 # link <path in repo> <path under ~>
@@ -133,6 +140,20 @@ if [[ "$(uname -s)" != Darwin || "$(uname -m)" != arm64 ]]; then
   exit 1
 fi
 
+# Every repo file the setup reads, links or copies. Checked before anything changes,
+# because a link to a missing file fails silently (git would just lose its config).
+missing=""
+for f in Brewfile macos.sh git/config git/.gitignore_global zsh/.zprofile zsh/.zshrc \
+  mise/config.toml starship/starship.toml ssh/config npm/.npmrc aws/config aws/credentials \
+  vscode/settings.json vscode/extensions.json; do
+  [[ -e "$DOTFILES/$f" ]] || missing+="    $f"$'\n'
+done
+if [[ -n $missing ]]; then
+  printf '%s✗ These files are missing from %s:%s\n%s' "$RED" "$DOTFILES" "$RESET" "$missing" >&2
+  printf '  Nothing was changed. Restore them (or fix their paths) and run install.sh again.\n' >&2
+  exit 1
+fi
+
 SSH_KEY="$HOME/.ssh/id_ed25519"
 GIT_EMAIL=$(sed -nE 's/^[[:space:]]*email[[:space:]]*=[[:space:]]*//p' "$DOTFILES/git/config" | head -1)
 MAS_IDS=$(sed -nE 's/^mas .*id:[[:space:]]*([0-9]+).*/\1/p' "$DOTFILES/Brewfile" | tr '\n' ' ')
@@ -145,6 +166,24 @@ if ask "Apply macOS preferences (Finder, keyboard, trackpad, Dock, firewall, Tou
 fi
 if [[ -n $MAS_IDS ]] && ask "Install Xcode from the App Store (~15 GB, you must be signed in to the App Store)?" y; then
   INSTALL_XCODE=true
+fi
+if $INSTALL_XCODE; then export HOMEBREW_BUNDLE_MAS_SKIP=""; else export HOMEBREW_BUNDLE_MAS_SKIP="$MAS_IDS"; fi
+
+# On a re-run, offer to update what is already installed instead of doing it silently
+UPGRADE_FLAG="" OUTDATED_COUNT=0
+[[ -x /opt/homebrew/bin/brew ]] && eval "$(/opt/homebrew/bin/brew shellenv)"
+if command -v brew >/dev/null 2>&1; then
+  note "checking what is already installed…"
+  brew update --quiet >/dev/null 2>&1 || true
+  outdated=$(comm -13 <(bundle_pending --no-upgrade) <(bundle_pending))
+  if [[ -n $outdated ]]; then
+    OUTDATED_COUNT=$(printf '%s\n' "$outdated" | grep -c .)
+    names=$(printf '%s\n' "$outdated" | sed -E 's/^(Formula|Cask|App) //' | head -8 | paste -sd ',' - | sed 's/,/, /g')
+    ((OUTDATED_COUNT > 8)) && names+=", …"
+    if ! ask "$OUTDATED_COUNT installed packages have updates ($names). Update them?" y; then
+      UPGRADE_FLAG="--no-upgrade"
+    fi
+  fi
 fi
 
 note "your password is needed once, for Homebrew, apps and macOS settings"
@@ -193,14 +232,21 @@ fi
 eval "$(/opt/homebrew/bin/brew shellenv)"
 
 step "Apps and CLIs (Brewfile)"
-note "the longest step; Homebrew prints its own progress below"
-mas_skip=""
-if ! $INSTALL_XCODE; then
-  mas_skip=$MAS_IDS
-  [[ -n $MAS_IDS ]] && note "skipping App Store apps (Xcode), as you chose"
+entries=$(grep -cE '^(brew|cask|mas) ' "$DOTFILES/Brewfile" || true)
+to_install=$(bundle_pending --no-upgrade | grep -c . || true)
+if [[ -n $UPGRADE_FLAG ]]; then
+  note "$entries entries: $to_install to install; $OUTDATED_COUNT updates left for later, as you chose"
+elif ((to_install + OUTDATED_COUNT == 0)); then
+  note "$entries entries, all installed and up to date"
+elif ((OUTDATED_COUNT == 0)); then
+  note "$entries entries: $to_install to install"
+else
+  note "$entries entries: $to_install to install, $OUTDATED_COUNT to update"
 fi
-# A single failing entry shouldn't stop the rest of the setup
-if HOMEBREW_BUNDLE_MAS_SKIP="$mas_skip" brew bundle --file="$DOTFILES/Brewfile"; then
+[[ -n $HOMEBREW_BUNDLE_MAS_SKIP ]] && note "skipping App Store apps (Xcode), as you chose"
+# --verbose streams each download and install; without it Homebrew stays silent
+# until the whole batch ends. A failing entry doesn't stop the rest of the setup.
+if brew bundle --verbose ${UPGRADE_FLAG:+"$UPGRADE_FLAG"} --file="$DOTFILES/Brewfile"; then
   ok "everything in the Brewfile is installed"
 else
   warn "some Brewfile entries failed (see above); fix them and run: brew bundle --file=$DOTFILES/Brewfile"
