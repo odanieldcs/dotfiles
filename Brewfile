@@ -47,6 +47,9 @@ cask "claude"                   # desktop app
 cask "superset"                 # terminal for running several agents
 tap "stablyai/orca"             # AI agent orchestrator
 cask "stablyai/orca/orca", trusted: true # Homebrew requires explicit trust for third-party taps
+brew "ollama"                   # local model server; models in ollama/
+brew "qwen-code"                # `qwen` CLI; settings in qwen/
+
 
 # --- Dev apps ------------------------------------------------------------------
 cask "docker-desktop"

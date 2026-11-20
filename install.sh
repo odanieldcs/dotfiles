@@ -24,7 +24,7 @@ else
   BOLD='' DIM='' RESET='' GREEN='' YELLOW='' RED='' BLUE=''
 fi
 
-TOTAL_STEPS=8 STEP_N=0 STEP_NAME="" STEP_STATUS="" STEP_START=0
+TOTAL_STEPS=9 STEP_N=0 STEP_NAME="" STEP_STATUS="" STEP_START=0
 SUMMARY="" WARNINGS=""
 
 ok() { printf '  %s✓%s %s\n' "$GREEN" "$RESET" "$*"; }
@@ -131,6 +131,13 @@ seed() {
   ok "~/$2 ← $1 (copy, edit it there)"
 }
 
+# --- Local AI helpers ---------------------------------------------------------------
+
+OLLAMA_URL=http://localhost:11434
+
+# Succeeds when the Ollama server answers
+ollama_up() { curl -sf --max-time 2 "$OLLAMA_URL/api/version" >/dev/null; }
+
 # --- Before starting: checks and questions ----------------------------------------
 
 printf '%sdotfiles%s → setting up %s\n\n' "$BOLD" "$RESET" "$(scutil --get ComputerName 2>/dev/null || hostname)"
@@ -145,9 +152,11 @@ fi
 missing=""
 for f in Brewfile macos.sh git/config git/.gitignore_global zsh/.zprofile zsh/.zshrc \
   mise/config.toml starship/starship.toml ssh/config npm/.npmrc aws/config aws/credentials \
-  vscode/settings.json vscode/extensions.json; do
+  vscode/settings.json vscode/extensions.json qwen/settings.json; do
   [[ -e "$DOTFILES/$f" ]] || missing+="    $f"$'\n'
 done
+# One local model per ollama/<name>.Modelfile
+compgen -G "$DOTFILES/ollama/*.Modelfile" >/dev/null || missing+="    ollama/*.Modelfile"$'\n'
 if [[ -n $missing ]]; then
   printf '%s✗ These files are missing from %s:%s\n%s' "$RED" "$DOTFILES" "$RESET" "$missing" >&2
   printf '  Nothing was changed. Restore them (or fix their paths) and run install.sh again.\n' >&2
@@ -159,7 +168,7 @@ GIT_EMAIL=$(sed -nE 's/^[[:space:]]*email[[:space:]]*=[[:space:]]*//p' "$DOTFILE
 MAS_IDS=$(sed -nE 's/^mas .*id:[[:space:]]*([0-9]+).*/\1/p' "$DOTFILES/Brewfile" | tr '\n' ' ')
 
 printf '%sA few questions first; after them the setup runs on its own.%s\n' "$BOLD" "$RESET"
-CREATE_SSH_KEY=false APPLY_MACOS=false INSTALL_XCODE=false
+CREATE_SSH_KEY=false APPLY_MACOS=false INSTALL_XCODE=false SETUP_LOCAL_AI=false
 if [[ ! -f $SSH_KEY ]] && ask "Create an SSH key for GitHub?" y; then CREATE_SSH_KEY=true; fi
 if ask "Apply macOS preferences (Finder, keyboard, trackpad, Dock, firewall, Touch ID for sudo)?" y; then
   APPLY_MACOS=true
@@ -168,6 +177,9 @@ if [[ -n $MAS_IDS ]] && ask "Install Xcode from the App Store (~15 GB, you must 
   INSTALL_XCODE=true
 fi
 if $INSTALL_XCODE; then export HOMEBREW_BUNDLE_MAS_SKIP=""; else export HOMEBREW_BUNDLE_MAS_SKIP="$MAS_IDS"; fi
+if ask "Set up local AI for Qwen Code (Ollama models from ollama/, ~41 GB the first time)?" y; then
+  SETUP_LOCAL_AI=true
+fi
 
 # On a re-run, offer to update what is already installed instead of doing it silently
 UPGRADE_FLAG="" OUTDATED_COUNT=0
@@ -250,6 +262,68 @@ if brew bundle --verbose ${UPGRADE_FLAG:+"$UPGRADE_FLAG"} --file="$DOTFILES/Brew
   ok "everything in the Brewfile is installed"
 else
   warn "some Brewfile entries failed (see above); fix them and run: brew bundle --file=$DOTFILES/Brewfile"
+fi
+
+step "Local AI (Ollama + Qwen Code)"
+if ! $SETUP_LOCAL_AI; then
+  skip_step "skipped (you answered no)"
+elif ! command -v ollama >/dev/null 2>&1 || ! command -v qwen >/dev/null 2>&1; then
+  warn "ollama or qwen not found (both come from the Brewfile); local AI not set up"
+else
+  # Copied, not linked, like aws/ and npm/: /auth can write API keys into it
+  seed qwen/settings.json .qwen/settings.json
+  chmod 700 "$HOME/.qwen"
+
+  # brew services also starts the server at every login
+  if ollama_up; then
+    ok "Ollama server already running"
+  elif brew services start ollama >/dev/null 2>&1; then
+    for _ in {1..30}; do ollama_up && break; sleep 1; done
+    if ollama_up; then
+      ok "Ollama server started (it also starts at login)"
+    else
+      warn "Ollama did not answer on $OLLAMA_URL; check: brew services info ollama"
+    fi
+  else
+    warn "could not start Ollama; run: brew services start ollama"
+  fi
+
+  if ollama_up; then
+    # The base model is downloaded once; the model is rebuilt on every run, so an
+    # edited Modelfile (e.g. num_ctx) applies the next time install.sh runs
+    for f in "$DOTFILES"/ollama/*.Modelfile; do
+      name=$(basename "$f" .Modelfile)
+      base=$(awk '/^FROM/ {print $2; exit}' "$f")
+      if ollama show "$base" >/dev/null 2>&1; then
+        note "$base already downloaded"
+      elif ! ollama pull "$base"; then
+        warn "could not download $base; run: ollama pull $base"
+        continue
+      fi
+      if out=$(ollama create "$name" -f "$f" 2>&1); then
+        ok "$name ← ollama/$(basename "$f")"
+      else
+        warn "could not create $name ($(tail -1 <<<"$out")); run: ollama create $name -f $f"
+      fi
+    done
+
+    # Smoke test: the default model in ~/.qwen/settings.json exists and answers
+    model=$(jq -r '.model.name // empty' "$HOME/.qwen/settings.json" 2>/dev/null || true)
+    if [[ -z $model ]] || ! ollama show "$model" >/dev/null 2>&1; then
+      warn "model.name in ~/.qwen/settings.json (${model:-empty}) is not an Ollama model; check the ids"
+    else
+      note "testing $model (the first load takes a few seconds)…"
+      request=$(jq -n --arg m "$model" '{model: $m, stream: false, think: false,
+        messages: [{role: "user", content: "Write a TypeScript debounce function."}],
+        options: {num_predict: 128}}')
+      if result=$(curl -sf --max-time 300 "$OLLAMA_URL/api/chat" -d "$request"); then
+        ok "$model: $(jq -r '"\(.eval_count) tokens at \(.eval_count / (.eval_duration / 1e9) | floor) tok/s, loaded in \(.load_duration / 1e9 * 10 | floor / 10)s"' <<<"$result")"
+      else
+        warn "$model did not answer; try: ollama run $model"
+      fi
+      ollama stop "$model" >/dev/null 2>&1 || true # frees its memory for the rest of the setup
+    fi
+  fi
 fi
 
 step "Config files"

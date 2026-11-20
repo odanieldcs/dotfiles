@@ -39,6 +39,7 @@ In Terminal:
 | `git/`, `ssh/`      | git, global gitignore, SSH                                               |
 | `vscode/`           | VS Code settings and extensions                                          |
 | `aws/`, `npm/`      | starting configs, copied once (not linked) because they hold credentials |
+| `ollama/`, `qwen/`  | local AI models (a Modelfile each) and Qwen Code settings (copied once)  |
 | `macos.sh`          | Finder, keyboard, trackpad, Dock, firewall, Touch ID for `sudo`          |
 
 ## Docs

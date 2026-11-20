@@ -45,6 +45,9 @@ Run these from `~/code/dev/dotfiles`; `brew bundle` reads the `Brewfile` in the 
 | Refresh the extension list from VS Code         | `code --list-extensions \| jq -R . \| jq -s '{recommendations: .}' > vscode/extensions.json` |
 | Change zsh, git, starship or VS Code settings   | edit the file in `~` or here, it's the same file; then commit                                |
 | Re-apply the whole setup                        | `./install.sh --yes`                                                                         |
+| Change a local model (context, base model)      | edit `ollama/<name>.Modelfile`, then `ollama create <name> -f ollama/<name>.Modelfile`       |
+| Add a local model                               | new `ollama/<name>.Modelfile` + an entry in `~/.qwen/settings.json` (and in `qwen/`)         |
+| Check that Qwen Code answers                    | `qwen -p "Reply with: ok"` inside a project; `ollama ps` shows the loaded model              |
 
 Projects pinned with Volta (`"volta"` in `package.json`) need a `.node-version` file; mise reads it, along with `.nvmrc` and the `packageManager` field.
 
@@ -53,6 +56,8 @@ Projects pinned with Volta (`"volta"` in `package.json`) need a `.node-version` 
 |             | Files                                                                                                | Where to edit                                                                                 |
 | ----------- | ---------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
 | Linked      | `.zshrc`, `.zprofile`, git config, `.gitignore_global`, mise, ssh config, starship, VS Code settings | anywhere: `~` and the repo point to the same file                                             |
-| Copied once | `~/.npmrc`, `~/.aws/config`, `~/.aws/credentials`                                                    | only in `~`. Tools write tokens and keys into them, so they never point into this public repo |
+| Copied once | `~/.npmrc`, `~/.aws/config`, `~/.aws/credentials`, `~/.qwen/settings.json`                           | only in `~`. Tools write tokens and keys into them, so they never point into this public repo |
+
+The `ollama/*.Modelfile` files are neither: `ollama create` reads them once and stores the model in `~/.ollama/models`. Edit them here and rebuild the model.
 
 Shell secrets go in `~/.zshrc.local`, which is not versioned.
